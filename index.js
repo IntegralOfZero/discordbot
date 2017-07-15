@@ -83,11 +83,19 @@ client.on("message", (message) => {
         return pixiv.searchIllust(args.join(" "));
       }).then((result) => { 
         illustrations = illustrations.concat(result.illusts);
+  
         console.log("Illustrations retrieved: " + illustrations.length);
+
+        let nextUrl = result.next_url;
+        if (!nextUrl) {
+          return null;
+        }
         return pixiv.requestUrl(result.next_url);
       })
       .then((result) => {
-        illustrations = illustrations.concat(result.illusts);
+        if (result) {
+          illustrations = illustrations.concat(result.illusts);
+        }
         console.log("Illustrations thus far: " + illustrations.length);
         let selectedIllustration = illustrations[Math.floor(Math.random() * illustrations.length)];
         console.log(selectedIllustration);
