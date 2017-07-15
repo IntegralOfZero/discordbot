@@ -70,22 +70,28 @@ client.on("message", (message) => {
     message.channel.send("Unlimited Blade Works");
     message.channel.sendFile("http://orig04.deviantart.net/29e2/f/2016/163/9/8/unlimited_blade_works__re_sized__by_pramudyayusuf-da5z15g.png");
   } else if (message.content.startsWith("pixiv")) {
-    console.log(message.content)
+    console.log("Message: " + message.content)
     let args = message.content.split(/\s+/g).slice(1);
-    console.log(args)
+    console.log("Arguments: " + args)
     if (args.length === 0) {
       return;
     }
     console.log(args.join(" "))
+    let illustrations = [];
     pixiv.login(process.env["pixivUser"], process.env["pixivPass"])
       .then(() => { 
         return pixiv.searchIllust(args.join(" "));
+      }).then((result) => { 
+        illustrations = illustrations.concat(result.illusts);
+        console.log("Illustrations retrieved: " + illustrations.length);
+        return pixiv.requestUrl(result.next_url);
       })
-      .then(result => {
-        let illust = result.illusts[Math.floor(Math.random() * result.illusts.length)];
-        console.log(illust);
-        message.channel.send("https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + illust.id);
-        // return pixiv.requestUrl(json.next_url);
+      .then((result) => {
+        illustrations = illustrations.concat(result.illusts);
+        console.log("Illustrations thus far: " + illustrations.length);
+        let selectedIllustration = illustrations[Math.floor(Math.random() * illustrations.length)];
+        console.log(selectedIllustration);
+        message.channel.send("https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + selectedIllustration.id);
       }).catch((err) => {
         console.log(err);
       });
