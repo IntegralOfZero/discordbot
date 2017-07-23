@@ -4,6 +4,8 @@ const client = new Discord.Client();
 const PixivApi = require('pixiv-api-client');
 const pixiv = new PixivApi();
 
+const request = require("request");
+
 /*
 const Danbooru = require('danbooru');
 let danbooru = new Danbooru()
@@ -179,6 +181,41 @@ client.on("message", (message) => {
   } else if (((message.content.indexOf("kokichi") > -1) || (message.content.indexOf("ouma") > -1)) && message.member.user.username === "Rintokki" && message.member.user.discriminator === "1924") {
     console.log(message.member);
     message.reply(":police_car::police_car::police_car::police_car::police_car::police_car::police_car::police_car::police_car::blobpolice::blobpolice::blobpolice::blobpolice::blobpolice:")
+  } else if (message.content.startsWith("stocks")) {
+    let symbol = message.content.split(/\s+/g).slice(1);
+    // 26Z1HA8NSSEGQYHP
+    if (!symbol) {
+      message.reply("Please provide the symbol of a stock (such as \"FB\" or \"MSFT\").");
+    } else {
+      //let currentPrice = new Promise((resolve, reject) => {
+      try {
+        let apiKey = process.env["stocksApiKey"]
+        request(`https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=1min&apikey=${stocksApiKey}`, function (error, response, body) {
+          if (error) {
+            console.error("An error occurred:");
+            console.log(error);
+            message.reply("An error occurred.");
+          } else {
+            let responseBody = JSON.parse(body);
+            console.log(responseBody);
+
+            let data = responseBody["Time Series (1min)"];
+            let recentMinuteKey = Object.keys(data)[0];
+            let recentMinuteData = data[recentMinuteKey];
+            console.log(recentMinuteData);
+
+            let price = recentMinuteData["4. close"]; // retrieve stock price at the closing of the most recent minute
+            console.log(price);
+  
+            message.reply(`Current stock price of ${symbol}: ${price} USD`);
+          }
+        });
+      //});
+    } catch (error) {
+        console.log(error);
+        message.reply("Unable to retrieve the current price for the specified stock.");
+      }
+    }
   }
   
   /* else if (message.content.startsWith("safebooru")) {

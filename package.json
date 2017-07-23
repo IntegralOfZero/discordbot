@@ -12,6 +12,7 @@
   "dependencies": {
     "danbooru": "^2.0.3",
     "discord.js": "^11.1.0",
-    "pixiv-api-client": "^0.14.0"
+    "pixiv-api-client": "^0.14.0",
+    "request": "^2.81.0"
   }
 }
