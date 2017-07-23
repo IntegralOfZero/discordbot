@@ -189,7 +189,7 @@ client.on("message", (message) => {
     } else {
       //let currentPrice = new Promise((resolve, reject) => {
       try {
-        let apiKey = process.env["stocksApiKey"]
+        let stocksApiKey = process.env["stocksApiKey"]
         request(`https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=1min&apikey=${stocksApiKey}`, function (error, response, body) {
           if (error) {
             console.error("An error occurred:");
