@@ -187,30 +187,96 @@ client.on("message", (message) => {
     if (!symbol) {
       message.reply("Please provide the symbol of a stock (such as \"FB\" or \"MSFT\").");
     } else {
-      //let currentPrice = new Promise((resolve, reject) => {
       try {
         let stocksApiKey = process.env["stocksApiKey"]
-        request(`https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=1min&apikey=${stocksApiKey}`, function (error, response, body) {
-          if (error) {
-            console.error("An error occurred:");
-            console.log(error);
-            message.reply("An error occurred.");
-          } else {
-            let responseBody = JSON.parse(body);
-            console.log(responseBody);
 
-            let data = responseBody["Time Series (1min)"];
-            let recentMinuteKey = Object.keys(data)[0];
-            let recentMinuteData = data[recentMinuteKey];
-            console.log(recentMinuteData);
+        let currentPricePromise = new Promise((resolve, reject) => {
+          request(`https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=1min&apikey=${stocksApiKey}`, function (error, response, body) {
+            if (error) {
+              console.log("An error occurred while attempting to retrive the current stock price.");
+              return reject(error);
+            } else {
+              let responseBody = JSON.parse(body);
+              console.log(responseBody);
 
-            let price = recentMinuteData["4. close"]; // retrieve stock price at the closing of the most recent minute
-            console.log(price);
-  
-            message.reply(`Current stock price of ${symbol}: ${price} USD`);
-          }
+              let data = responseBody["Time Series (1min)"];
+              let recentMinuteKey = Object.keys(data)[0];
+              let recentMinuteData = data[recentMinuteKey];
+              console.log(recentMinuteData);
+
+              let price = recentMinuteData["4. close"]; // retrieve stock price at the closing of the most recent minute
+              console.log(price);
+    
+              return resolve(price);
+            }
+          });
         });
-      //});
+
+        let timeSeriesOpeningPricesPromise = new Promise((resolve, reject) => {
+          request(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&interval=1min&apikey=${stocksApiKey}`, function (error, response, body) {
+            if (error) {
+              console.log("An error occurred while attempting to retrive opening stock prices.");
+              return reject(error);
+            } else {
+              let responseBody = JSON.parse(body);
+              console.log(responseBody);
+
+              let data = responseBody["Time Series (Daily)"];
+    
+              let todayKey = Object.keys(data)[0];
+              let todayData = data[todayKey];
+              let todayOpeningPrice = todayData["1. open"]; // retrieve stock price at the opening of the current day
+              console.log("Today's opening price: " + todayOpeningPrice);
+
+              let yesterdayKey = Object.keys(data)[1];
+              let yesterdayData = data[yesterdayKey];
+              let yesterdayOpeningPrice = yesterdayData["1. open"]; // retrieve stock price at the opening of the day before
+              console.log("Yesterday's opening price: " + yesterdayOpeningPrice);
+    
+              let weekAgoKey = Object.keys(data)[7];
+              let weekAgoData = data[weekAgoKey];
+              let weekAgoOpeningPrice = weekAgoData["1. open"]; // retrieve stock price at the opening of the day before
+              console.log("A week ago's opening price: " + weekAgoOpeningPrice);
+
+              let monthAgoKey = Object.keys(data)[30];
+              let monthAgoData = data[monthAgoKey];
+              let monthAgoOpeningPrice = monthAgoData["1. open"]; // retrieve stock price at the opening of the day before
+              console.log("A month ago's opening price: " + monthAgoOpeningPrice);
+  
+              return resolve({
+                today: todayOpeningPrice,
+                yesterday: yesterdayOpeningPrice,
+                weekAgo: weekAgoOpeningPrice,
+                monthAgo: monthAgoOpeningPrice
+              });
+            }
+          });
+        });
+
+        Promise.all([currentPricePromise, timeSeriesOpeningPricesPromise])
+          .then((priceData) => {
+            console.log("Promise.all completed");
+            console.log(priceData);
+            let currentPrice = priceData[0];
+            message.reply(`Current stock price of ${symbol}: **${currentPrice} USD**`);
+
+            let openingPrices = priceData[1];
+            let currentToTodayOpeningDiff = (currentPrice - openingPrices.today).toFixed(4);
+            let currentToYesterdayOpeningDiff = (currentPrice - openingPrices.yesterday).toFixed(4);
+            let currentToAWeekAgoOpeningDiff = (currentPrice - openingPrices.weekAgo).toFixed(4);
+            let currentToAMonthAgoOpeningDiff = (currentPrice - openingPrices.monthAgo).toFixed(4);
+  
+            message.channel.send(
+              `Current price compared to previous opening prices (weekends are excluded from the continuity): \n\n` +
+              `**${currentToTodayOpeningDiff}** difference compared to today. \n` +
+              `**${currentToYesterdayOpeningDiff}** difference compared to yesterday. \n` +
+              `**${currentToAWeekAgoOpeningDiff}** difference compared to a week ago. \n` +
+              `**${currentToAMonthAgoOpeningDiff}** difference compared to a month ago (30 days).`);
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+
     } catch (error) {
         console.log(error);
         message.reply("Unable to retrieve the current price for the specified stock.");
