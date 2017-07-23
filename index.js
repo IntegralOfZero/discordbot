@@ -233,12 +233,12 @@ client.on("message", (message) => {
               let yesterdayOpeningPrice = yesterdayData["1. open"]; // retrieve stock price at the opening of the day before
               console.log("Yesterday's opening price: " + yesterdayOpeningPrice);
     
-              let weekAgoKey = Object.keys(data)[7];
+              let weekAgoKey = Object.keys(data)[5];
               let weekAgoData = data[weekAgoKey];
               let weekAgoOpeningPrice = weekAgoData["1. open"]; // retrieve stock price at the opening of the day before
               console.log("A week ago's opening price: " + weekAgoOpeningPrice);
 
-              let monthAgoKey = Object.keys(data)[30];
+              let monthAgoKey = Object.keys(data)[20];
               let monthAgoData = data[monthAgoKey];
               let monthAgoOpeningPrice = monthAgoData["1. open"]; // retrieve stock price at the opening of the day before
               console.log("A month ago's opening price: " + monthAgoOpeningPrice);
@@ -270,8 +270,8 @@ client.on("message", (message) => {
               `Current price compared to previous opening prices (weekends are excluded from the continuity): \n\n` +
               `**${currentToTodayOpeningDiff}** difference compared to today. \n` +
               `**${currentToYesterdayOpeningDiff}** difference compared to yesterday. \n` +
-              `**${currentToAWeekAgoOpeningDiff}** difference compared to a week ago. \n` +
-              `**${currentToAMonthAgoOpeningDiff}** difference compared to a month ago (30 days).`);
+              `**${currentToAWeekAgoOpeningDiff}** difference compared to a week ago (5 trading days). \n` +
+              `**${currentToAMonthAgoOpeningDiff}** difference compared to a month ago (20 trading days).`);
           })
           .catch((error) => {
             console.log(error);
