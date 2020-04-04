@@ -6,6 +6,11 @@
 trigger:
 - master
 
+pr:
+- master
+- feature/*
+- bug/*
+
 pool:
   vmImage: 'ubuntu-latest'
 
